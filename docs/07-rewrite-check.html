@@ -19,6 +19,12 @@
 <body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
   <div class="p-4">
     <div class="mx-auto max-w-6xl text-base/7 text-gray-700">
+      <!-- Top Nav: 目次 / 前へ / 次へ -->
+      <div class="mb-3 flex items-center gap-2 text-sm">
+        <a href="index.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">目次へ戻る</a>
+        <a href="06-prompt-design.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">← 前へ</a>
+        <a href="08-summary-qa.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">次へ →</a>
+      </div>
       <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">🖊️ リライト(目標：75点チェック)</h1>
 
       <!-- ルーブリックカード -->
@@ -186,4 +192,3 @@
     document.getElementById('tReset').addEventListener('click', ()=>{ remain=30.0; bar.style.width='0%'; label.textContent='30.0'; });
   </script>
 </body>
-
