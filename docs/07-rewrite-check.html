@@ -92,23 +92,6 @@
         </div>
       </div>
 
-      <!-- 30秒タイマー -->
-      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
-        <div class="flex items-center gap-3">
-          <h2 class="font-medium text-[#171717]"><strong>⏱️ 30秒ペアチェック用タイマー</strong></h2>
-          <div class="ml-auto flex items-center gap-2">
-            <button id="tStart" class="btn primary">開始</button>
-            <button id="tPause" class="btn">一時停止</button>
-            <button id="tReset" class="btn">リセット</button>
-          </div>
-        </div>
-        <div class="mt-3">
-          <div class="w-full bg-gray-200 rounded h-3 overflow-hidden">
-            <div id="bar" class="h-3 bg-blue-600" style="width:0%"></div>
-          </div>
-          <div class="text-center mt-2 text-2xl font-bold" id="tLabel">30.0</div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -178,17 +161,6 @@
     }
     renderTodo();
 
-    // 30秒タイマー
-    let remain = 30.0; let timer = null; const bar = document.getElementById('bar'); const label = document.getElementById('tLabel');
-    function tick(){
-      remain = Math.max(0, remain - 0.1);
-      const pct = 100 * (1 - remain/30.0);
-      bar.style.width = pct + '%';
-      label.textContent = remain.toFixed(1);
-      if(remain<=0){ clearInterval(timer); timer=null; }
-    }
-    document.getElementById('tStart').addEventListener('click', ()=>{ if(!timer) timer = setInterval(tick,100); });
-    document.getElementById('tPause').addEventListener('click', ()=>{ if(timer){ clearInterval(timer); timer=null; } });
-    document.getElementById('tReset').addEventListener('click', ()=>{ remain=30.0; bar.style.width='0%'; label.textContent='30.0'; });
+    
   </script>
 </body>
