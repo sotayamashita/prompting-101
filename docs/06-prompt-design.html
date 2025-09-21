@@ -1,0 +1,216 @@
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <style>
+    .stat-box{border:1px solid rgba(0,0,0,.08); border-radius:.5rem; padding:.5rem .75rem; background:#fafafa}
+    .kbd{display:inline-block;border:1px solid #d1d5db;border-bottom-width:2px;border-radius:.375rem;padding:.125rem .375rem;background:#fff}
+    .btn{background:#f9fafb;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem}
+    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+    .badge{display:inline-block; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:9999px; padding:.125rem .5rem; font-size:.75rem;}
+    textarea{white-space:pre-wrap}
+  </style>
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+  <div class="p-4">
+    <div class="mx-auto max-w-6xl text-base/7 text-gray-700">
+      <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">
+        💬 プロンプト設計
+      </h1>
+
+      <!-- 使い方カード -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <h2 class="font-medium mb-2 text-[#171717]"><strong>🧰 使い方</strong></h2>
+        <ul class="list-disc ml-5 text-sm text-gray-700">
+          <li>左のフォームに <span class="badge">コア6</span> を入力し、必要なら <span class="badge">オプション4</span> を追加。</li>
+          <li>右側のプレビューが即時更新。内容をそのまま実行に使えます。</li>
+          <li>チェックに従って不足を埋めると、再現性の高いプロンプトになります。</li>
+        </ul>
+      </div>
+
+      <!-- 入力フォーム + プレビュー -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 入力フォーム -->
+        <div class="bg-white rounded-md p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+          <div class="flex items-center gap-2 mb-3">
+            <h2 class="font-medium text-[#171717]"><strong>🧩 フォーム</strong></h2>
+            <span class="text-xs text-gray-500">（入力で右のプレビューが更新）</span>
+          </div>
+
+          <div class="mb-3 flex items-center gap-2">
+            <label class="text-sm text-gray-600">サンプル</label>
+            <select id="preset" class="border rounded px-2 py-1">
+              <option value="none">空（自分で入力）</option>
+              <option value="press">プレスリリース（新機能発表）</option>
+              <option value="recipe">レシピ（15分パスタ）</option>
+              <option value="bug">バグ報告（フロントエンド）</option>
+              <option value="travel">旅行プラン（京都1泊2日）</option>
+            </select>
+            <button id="clearAll" class="btn ml-auto">リセット</button>
+          </div>
+
+          <h3 class="font-semibold mb-2">[コア]</h3>
+          <label class="text-sm">1) 役割・トーン</label>
+          <input id="role" class="w-full border rounded px-3 py-2 mb-3" placeholder="例: あなたは広報担当です。丁寧体で、断定は避ける。" />
+
+          <label class="text-sm">2) 目的（成功条件・一文）</label>
+          <input id="goal" class="w-full border rounded px-3 py-2 mb-3" placeholder="Doneの定義を一文で。例: ITメディア向けに300字で要点を伝える。" />
+
+          <label class="text-sm">3) 文脈（背景/参照/対象/制約）</label>
+          <textarea id="ctx" class="w-full border rounded px-3 py-2 h-28 mb-3" placeholder="対象・読み手・前提・入力データ・制約など"></textarea>
+
+          <label class="text-sm">4) 手順・ルール（番号付き）</label>
+          <textarea id="steps" class="w-full border rounded px-3 py-2 h-24 mb-3" placeholder="1) ... 2) ... 3) 禁止: ..."></textarea>
+
+          <label class="text-sm">5) 出力形式（厳密指定）</label>
+          <input id="format" class="w-full border rounded px-3 py-2 mb-3" placeholder="例: JSON(keys: title, body, cta)／表（列名…）／見出し順など" />
+
+          <label class="text-sm">6) 例（Few-shot 1–2件）</label>
+          <textarea id="examples" class="w-full border rounded px-3 py-2 h-24 mb-3" placeholder="入力: ...\n期待出力: ..."></textarea>
+
+          <h3 class="font-semibold mt-2 mb-2">[オプション]</h3>
+          <label class="text-sm">会話履歴</label>
+          <textarea id="conv" class="w-full border rounded px-3 py-2 h-20 mb-3" placeholder="直近のやり取り要約/引用"></textarea>
+
+            <div>
+              <label class="text-sm">思考方針</label>
+              <input id="reason" class="w-full border rounded px-3 py-2" placeholder="段階的に考え、最後に自己検証…" />
+            </div>
+            <div>
+              <label class="text-sm">重要ポイントの再確認（Final Reminders）</label>
+              <input id="final" class="w-full border rounded px-3 py-2" placeholder="最後に守るルールを3点…" />
+            </div>
+
+          <label class="text-sm mt-3 block">Prefilled response（任意）</label>
+          <textarea id="skeleton" class="w-full border rounded px-3 py-2 h-20" placeholder="<response>{ここに本文}</response>"></textarea>
+        </div>
+
+        <!-- プレビュー＆チェック -->
+        <div class="bg-white rounded-md p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+          <div class="flex items-center gap-3 mb-2">
+            <h2 class="font-medium text-[#171717]"><strong>📄 プレビュー</strong></h2>
+            <span class="text-xs text-gray-500">（このまま実行に利用できます）</span>
+          </div>
+          <pre id="preview" class="whitespace-pre-wrap text-sm bg-[#0f172a] text-[#e2e8f0] rounded p-3 min-h-64"></pre>
+
+          <div class="grid grid-cols-3 gap-3 mt-3">
+            <div class="stat-box"><div class="text-xs text-gray-500">概算トークン数</div><div id="mTokens" class="text-2xl font-bold">0</div></div>
+            <div class="stat-box"><div class="text-xs text-gray-500">文字数</div><div id="mChars" class="text-2xl font-bold">0</div></div>
+            <div class="stat-box"><div class="text-xs text-gray-500">行数</div><div id="mLines" class="text-2xl font-bold">0</div></div>
+          </div>
+
+          <div class="mt-4">
+            <h3 class="font-semibold mb-1">✅ チェック</h3>
+            <ul id="checklist" class="list-disc ml-5 text-sm text-gray-700"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ———————————————————————
+    // プリセット
+    // ———————————————————————
+    const presets = {
+      press: {
+        role: 'あなたは広報担当です。丁寧体で、断定表現は避けてください。',
+        goal: 'ITメディア向けに新機能を300字で紹介する（最後にCTAを1文）。',
+        ctx: '対象: ITメディア読者\n前提: 既存ユーザーにも有益\n参照: 変更点A(検索+30%)、B(テンプレ共有)\n制約: 事実のみ、数値は丸めない',
+        steps: '1) 変更点を2点抽出\n2) 利点を具体例で2つ\n3) 禁止: 新情報の創作',
+        format: 'JSON (keys: title, body, cta)',
+        examples: '入力: 機能A/Bの箇条書き\n期待出力: title/body/cta を含むJSON',
+        conv: '', reason: '段階的に考え、最後に事実整合を自己検証。', final: '事実のみ/禁止: 創作/語調は丁寧体', skeleton: ''
+      },
+      recipe: {
+        role: 'あなたは料理研究家です。丁寧体で、材料は国内表記に統一してください。',
+        goal: '平日夜に15分で作れるパスタレシピを作成する。',
+        ctx: '対象: 2人分\n制約: 電子レンジは使わない、洗い物は最小限',
+        steps: '1) 材料と分量\n2) 手順（番号付き）\n3) 片付けのコツを1行',
+        format: 'Markdown（見出し: 材料/手順/コツ）',
+        examples: '入力: トマト缶/ツナ缶/玉ねぎ/にんにく\n期待出力: 材料の表・手順3–5行・最後にコツ',
+        conv: '', reason: '簡潔に、要点を先に列挙。', final: '禁: 生焼け/過度な装飾表現', skeleton: ''
+      },
+      bug: {
+        role: 'あなたはQAです。丁寧体で、再現手順は厳密に書いてください。',
+        goal: 'フロントエンドの表示崩れを開発者に共有するチケットを作る。',
+        ctx: '環境: macOS/Chrome 最新\n対象: トップページのヒーロー画像\n制約: スクリーンショットIDを含める',
+        steps: '1) 期待結果\n2) 実際結果\n3) 再現手順\n4) 追加情報（ログ/SS）',
+        format: 'YAML (keys: expected, actual, steps, evidence)',
+        examples: '入力: 768pxで崩れる\n期待出力: 再現手順は3ステップ以上',
+        conv: '', reason: '曖昧語を避け、数値で指定。', final: '画像ID必須/禁: 推測・断定的原因', skeleton: ''
+      },
+      travel: {
+        role: 'あなたは旅行プランナーです。丁寧体で、過度な宣伝表現は避けてください。',
+        goal: '週末の京都1泊2日モデルプランを作る（雨天代替案つき）。',
+        ctx: '対象: 20–40代カップル\n制約: 予算2万円/人、移動は公共交通',
+        steps: '1) 1日目 午前/午後/夜\n2) 2日目 午前/午後\n3) 雨天代替案',
+        format: 'テーブル（時間帯/場所/所要/費用/メモ）',
+        examples: '入力: 清水寺/祇園/嵐山\n期待出力: 各行に費用目安を含む',
+        conv: '', reason: '移動導線を最短に、距離関係を尊重。', final: '禁: 車移動の前提', skeleton: ''
+      }
+    };
+
+    const el = (id)=>document.getElementById(id);
+    const fields = ['role','goal','ctx','steps','format','examples','conv','reason','final','skeleton'];
+
+    function build(){
+      const v = Object.fromEntries(fields.map(k=>[k, el(k).value.trim()]));
+      const core = [v.role, v.goal, v.ctx, v.steps, v.format, v.examples];
+      const opt  = [v.conv, v.reason, v.final, v.skeleton];
+
+      const text = `【コア】\n役割・トーン: ${v.role}\n目的（成功条件）: ${v.goal}\n文脈（背景/参照）:\n${v.ctx}\n手順・ルール:\n${v.steps}\n出力形式: ${v.format}\n例（Few-shot）:\n${v.examples}\n\n【オプション】\n会話履歴:\n${v.conv}\n思考方針: ${v.reason}\n重要ポイントの再確認: ${v.final}\nPrefilled response（任意）:\n${v.skeleton}`.trim();
+
+      el('preview').textContent = text;
+      el('mChars').textContent = text.length;
+      el('mLines').textContent = text.split(/\n/).length;
+      el('mTokens').textContent = estimateTokens(text);
+      renderChecklist(core, opt);
+    }
+
+    function estimateTokens(s){
+      // 簡易: 英数字は連続で1、日本語は1文字=1、記号は1
+      let count = 0; let i = 0;
+      while(i < s.length){
+        const ch = s[i];
+        if(/[A-Za-z0-9]/.test(ch)){
+          while(i < s.length && /[A-Za-z0-9]/.test(s[i])) i++;
+          count++; continue;
+        }
+        if(/[\u3040-\u30ff\u3400-\u9fff]/.test(ch)) { i++; count++; continue; }
+        if(/\s/.test(ch)) { i++; continue; }
+        i++; count++;
+      }
+      return count;
+    }
+
+    function renderChecklist(core, opt){
+      const names = ['役割・トーン','目的（成功条件）','文脈','手順・ルール','出力形式','例'];
+      const onames= ['会話履歴','思考方針','Final Reminders','Prefilled'];
+      const missing = [];
+      core.forEach((v,i)=>{ if(!v) missing.push(`コア: ${names[i]} が未入力`); });
+      const list = el('checklist');
+      list.innerHTML = '';
+      if(missing.length===0){
+        list.innerHTML = '<li>コア6がすべて入力されています。構成は完成です。</li>';
+      } else {
+        missing.forEach(m=>{ const li=document.createElement('li'); li.textContent=m; list.appendChild(li); });
+      }
+      opt.forEach((v,i)=>{ if(!v){ const li=document.createElement('li'); li.className='text-gray-500'; li.textContent=`オプション: ${onames[i]} は空（必要に応じて追記）`; list.appendChild(li);} });
+    }
+
+    // イベント
+    fields.forEach(id=> el(id).addEventListener('input', build));
+    el('preset').addEventListener('change', ()=>{
+      const key = el('preset').value; if(key==='none'){ fields.forEach(id=> el(id).value=''); build(); return; }
+      const p = presets[key]; for(const k of fields){ el(k).value = p[k] ?? ''; } build();
+    });
+    el('clearAll').addEventListener('click', ()=>{ fields.forEach(id=> el(id).value=''); build(); });
+    // コピーボタン・保存ボタンは仕様により未実装
+
+    // 初期化
+    build();
+  </script>
+</body>

@@ -1,0 +1,130 @@
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <style>
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.5rem;padding:1rem;box-shadow:0 2px 2px rgba(0,0,0,.04)}
+    .btn{background:#f9fafb;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem}
+    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+    .ok{color:#16a34a}
+    .ng{color:#dc2626}
+    textarea{white-space:pre-wrap}
+    details>summary{cursor:pointer}
+  </style>
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+  <div class="p-4">
+    <div class="mx-auto max-w-6xl text-base/7 text-gray-700">
+      <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">🏄‍♂️ まとめ・Q&A</h1>
+
+      <!-- まとめ（理解チェック） -->
+      <div class="card my-4">
+        <h2 class="font-medium mb-2 text-[#171717]"><strong>🧠 3問ミニチェック</strong></h2>
+        <p class="text-sm text-gray-600 mb-3">今日の要点を30秒で確認しましょう。</p>
+        <ol class="list-decimal ml-5 space-y-3">
+          <li>
+            <div class="mb-1">LLMが次の語を決める仕組みを一言でいうと？</div>
+            <label class="block text-sm"><input type="radio" name="q1" value="a"> 固定ルールの置換</label>
+            <label class="block text-sm"><input type="radio" name="q1" value="b"> 次トークンの確率分布から選ぶ</label>
+            <label class="block text-sm"><input type="radio" name="q1" value="c"> 辞書の完全一致検索</label>
+            <div id="a1" class="text-sm mt-1"></div>
+          </li>
+          <li>
+            <div class="mb-1">出力の再現性を上げる最も効果的な指定は？</div>
+            <label class="block text-sm"><input type="radio" name="q2" value="a"> 雑談を混ぜて親近感を出す</label>
+            <label class="block text-sm"><input type="radio" name="q2" value="b"> 出力形式（JSON/表など）を厳密指定</label>
+            <label class="block text-sm"><input type="radio" name="q2" value="c"> 例を10件以上入れる</label>
+            <div id="a2" class="text-sm mt-1"></div>
+          </li>
+          <li>
+            <div class="mb-1">「Final Reminders」を置く適切な位置は？</div>
+            <label class="block text-sm"><input type="radio" name="q3" value="a"> 先頭</label>
+            <label class="block text-sm"><input type="radio" name="q3" value="b"> 中ほど</label>
+            <label class="block text-sm"><input type="radio" name="q3" value="c"> 最後（直近上書きが効く）</label>
+            <div id="a3" class="text-sm mt-1"></div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- 次アクション計画 -->
+      <div class="card my-4">
+        <div class="flex items-center gap-3 mb-2">
+          <h2 class="font-medium text-[#171717]"><strong>🚀 次の一歩プランナー</strong></h2>
+          <span class="text-xs text-gray-500">（2分で実務に接続）</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm">対象タスク</label>
+            <input id="pTask" class="w-full border rounded px-3 py-2 mb-2" placeholder="例: 週報の要約を自動化" />
+            <label class="text-sm">頻度／タイミング</label>
+            <input id="pFreq" class="w-full border rounded px-3 py-2 mb-2" placeholder="例: 毎週金曜17時" />
+            <label class="text-sm">成功指標（Done）</label>
+            <input id="pKpi" class="w-full border rounded px-3 py-2 mb-2" placeholder="例: JSON整形率95%／手修正3分以内" />
+            <label class="text-sm">今日の学び（1行）</label>
+            <input id="pLearn" class="w-full border rounded px-3 py-2" placeholder="例: 出力形式の厳密指定が効く" />
+            <div class="mt-3"><button id="pBuild" class="btn primary">計画を作る</button></div>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1">計画（そのままチーム共有OK）</h3>
+            <pre id="pOut" class="whitespace-pre-wrap text-sm bg-[#0f172a] text-[#e2e8f0] rounded p-3 min-h-48"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- よくあるQ&A -->
+      <div class="card my-4">
+        <h2 class="font-medium mb-2 text-[#171717]"><strong>❓ よくあるQ&A</strong></h2>
+        <div class="space-y-3">
+          <details class="p-2 border rounded">
+            <summary><strong>温度（temperature）はどう選ぶ？</strong></summary>
+            <p class="text-sm mt-2">重要タスクは低温（0付近）で再現性重視、発想・ブレストは中温（0.5–0.7）。</p>
+          </details>
+          <details class="p-2 border rounded">
+            <summary><strong>JSONが崩れるのを防ぐには？</strong></summary>
+            <p class="text-sm mt-2">出力形式を厳密指定し、<em>Prefilled response</em> でキー順を固定。必要に応じてミニ例を付与。</p>
+          </details>
+          <details class="p-2 border rounded">
+            <summary><strong>例は何件がよい？</strong></summary>
+            <p class="text-sm mt-2">1–2件が目安。境界例（やってはいけない例）を入れると分布が安定。</p>
+          </details>
+          <details class="p-2 border rounded">
+            <summary><strong>長文の文脈はどう渡す？</strong></summary>
+            <p class="text-sm mt-2">見出し/タグで区切り、対象・制約・参照を近接配置。最後に Final Reminders。</p>
+          </details>
+          <details class="p-2 border rounded md:col-span-2">
+            <summary><strong>社内に展開するには？</strong></summary>
+            <p class="text-sm mt-2">C案テンプレを共有し、<strong>75点チェック</strong>を採点フローに組み込む。定例で1つだけ改善を積み上げる。</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ミニチェック採点
+    function setAnswer(name, correct, outId){
+      const nodes = document.querySelectorAll(`input[name=${name}]`);
+      nodes.forEach(n=> n.addEventListener('change', ()=>{
+        const out = document.getElementById(outId);
+        if(document.querySelector(`input[name=${name}]:checked`).value === correct){ out.textContent='正解！'; out.className='ok'; }
+        else { out.textContent='もう一度考えよう'; out.className='ng'; }
+      }));
+    }
+    setAnswer('q1','b','a1');
+    setAnswer('q2','b','a2');
+    setAnswer('q3','c','a3');
+
+    // 次アクションプラン出力
+    document.getElementById('pBuild').addEventListener('click', ()=>{
+      const task = document.getElementById('pTask').value||'（未入力）';
+      const freq = document.getElementById('pFreq').value||'（未入力）';
+      const kpi  = document.getElementById('pKpi').value||'（未入力）';
+      const learn= document.getElementById('pLearn').value||'（未入力）';
+      const plan = `【次の一歩】\n- 対象タスク: ${task}\n- 実施タイミング: ${freq}\n- 成功指標: ${kpi}\n\n【実行テンプレ（C案）】\n1) 役割・トーン: あなたは◯◯。丁寧体。\n2) 目的（成功条件）: Doneを一文\n3) 文脈: 対象/前提/制約を区切って\n4) 手順・ルール: 番号付き\n5) 出力形式: JSON/表/見出し\n6) 例: 1–2件（境界例）\n[オプション] 思考方針/Final/Prefilled\n\n【今日の学び】\n- ${learn}\n\n【指差し確認（75点チェック）】\n- コア6が全て埋まっているか？\n- 温度は目的に合っているか？`;
+      document.getElementById('pOut').textContent = plan;
+    });
+  </script>
+</body>
+

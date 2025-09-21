@@ -1,0 +1,185 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+    <div class="p-4">
+        <div class="mx-auto max-w-3xl text-base/7 text-gray-700">
+            <!-- Top Nav: 目次 / 前へ / 次へ -->
+            <div class="mb-3 flex items-center gap-2 text-sm">
+                <a href="index.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">目次へ戻る</a>
+                <a href="02-tokenization.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">← 前へ</a>
+                <a href="04-next-token.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">次へ →</a>
+            </div>
+            <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">👀 ステップ2: どの言葉に「注目」するか（Attention）</h1>
+
+            <!-- 体験セクション -->
+            <section class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">体験：どの言葉に注意が向く？</h2>
+
+                <p class="mb-4">
+                    Transformerの革新は<strong>自己注意（Self‑Attention）</strong>です。文中のすべての語が互いを同時に参照でき、
+                    離れた語の関係も一度に拾えます。さらに<strong>複数の視点で同時に読むしくみ</strong>があり、
+                    主語–述語や修飾、代名詞の指し先などを、それぞれの視点で並行して確認できます。
+                    ただし<strong>注意重み＝理由の説明</strong>ではなく、いつも正しく代名詞が解決できるわけでもありません。
+                    また長い文脈では中央の情報が使われにくい傾向もあります。
+                    だからプロンプトでは、重要な指示や出力形式は<strong>冒頭または末尾</strong>にまとめ、
+                    参照してほしい情報は<strong>近くに・構造化して</strong>置くのが効果的です。
+                </p>
+
+                <div class="mb-2 text-gray-900">例文で見てみよう：</div>
+                <div class="border border-dashed border-gray-200 p-4">
+                    <div id="tokens" class="flex flex-wrap gap-2 items-center"></div>
+                    <p class="text-sm text-gray-500 mt-2">👆 単語をクリックすると、関連する単語がハイライトされます</p>
+                </div>
+
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4" role="alert">
+                    <p class="font-bold">💡Attentionの仕組みを理解することは、プロンプトを書くうえでなぜ重要なのか?</p>
+                    <p class="mt-2">
+                        Attention は「どの語にどれだけ注目するか」を学習し、文中の関係から答えを作ります。したがって、
+                        指示や根拠の<strong>位置・近接・構造</strong>が出力品質に直結します。
+                    </p>
+                    <ul class="list-disc pl-6 space-y-1 mt-2">
+                        <li><strong>位置が効く</strong>：長い入力では<strong>冒頭と末尾が強く、中央が弱い</strong>傾向（“lost in the middle”）。重要な指示や出力形式は<strong>末尾（または冒頭）</strong>にまとめる。</li>
+                        <li><strong>直前が効く</strong>：回答直前の情報ほど参照されやすい。最後に<strong>最終指示／チェックリスト</strong>を置く。</li>
+                        <li><strong>構造化が効く</strong>：見出し・区切り・タグ/JSONで塊を作り、<strong>関連情報を近接配置</strong>する。</li>
+                        <li><strong>ノイズに弱い</strong>：不要情報は注意を分散。<strong>必要最小限＋引用→回答</strong>の順にすると安定。</li>
+                        <li><strong>良い例は近くに</strong>：期待する出力例（Few-shot）は<strong>指示の近く</strong>に置く。</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const tokensEl = document.getElementById('tokens');
+
+        // 固定トークン列（画像の例に合わせた簡易分かち）
+        const TOKENS = [
+            '私','は','昨日','本屋','で','面白い','小説','を','買いました','。','それ','を','友人','に','勧めました'
+        ];
+
+        // ------------- Attention scoring（近似＋手動ブースト） -------------
+        const JA_PARTICLES = new Set(['は','が','を','に','で','と','も','の','へ','から','より','まで','や','など','そして','しかし','ので','ため','だ','です','ます','。','、']);
+
+        function isPunct(t){ return /[\p{P}\p{S}]/u.test(t); }
+        function isNumber(t){ return /^\p{N}+[.,\p{N}]*$/u.test(t); }
+        function isLatin(t){ return /^[A-Za-z]+$/.test(t); }
+        function isCJK(t){ return /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u.test(t); }
+
+        function charSet(s){ return new Set([...s.toLowerCase()]); }
+        function jaccard(a,b){
+            const A = charSet(a), B = charSet(b);
+            let inter = 0; for(const x of A) if(B.has(x)) inter++;
+            const uni = new Set([...A, ...B]).size || 1;
+            return inter/uni;
+        }
+
+        function baseSim(a,b){
+            if(a===b) return 1.0;
+            if(isNumber(a)&&isNumber(b)) return 0.9;
+            if(isLatin(a)&&isLatin(b)) return 0.6 + 0.3*jaccard(a,b);
+            if(isCJK(a)&&isCJK(b)) return 0.55 + 0.35*jaccard(a,b);
+            if(isPunct(a)||isPunct(b)) return 0.1;
+            return 0.3 + 0.4*jaccard(a,b);
+        }
+
+        function distanceBias(d){
+            const alpha = 0.45; // 近い語を少し優遇
+            return 1 / (1 + alpha * Math.abs(d));
+        }
+
+        function rolePenalty(t){
+            let w = 1.0;
+            if (isPunct(t)) w *= 0.2;
+            if (JA_PARTICLES.has(t)) w *= 0.4;
+            return w;
+        }
+
+        // 手動リンク（例文に限り強化したい関係）
+        const LINKS = {
+            '買いました': ['私','小説','本屋','昨日','で','を'],
+            '小説': ['面白い','買いました','を','それ'],
+            '面白い': ['小説'],
+            '本屋': ['買いました','で'],
+            '私': ['買いました','は'],
+            '昨日': ['買いました'],
+            'それ': ['小説'],
+            '勧めました': ['それ','友人','に','を'],
+            '友人': ['勧めました','に']
+        };
+
+        function attentionScores(tokens, qIndex){
+            const q = tokens[qIndex];
+            const scores = tokens.map((t,i)=> {
+                let s = baseSim(q,t)*distanceBias(i-qIndex)*rolePenalty(t);
+                if (LINKS[q] && LINKS[q].includes(t)) s *= 2.2; // 関連を強調
+                if (LINKS[t] && LINKS[t].includes(q)) s *= 2.0;
+                return s;
+            });
+            // 正規化（maxで割る）
+            const max = Math.max(...scores, 1e-6);
+            return scores.map((s,i)=> i===qIndex ? 1.0 : (s/max));
+        }
+
+        // ------------- UI rendering -------------
+        function weightToColor(w){
+            // 0→とても薄い青、1→濃い青（先ほどと同じ色設計）
+            const light = 92 - Math.round(42*w); // 92%→50%
+            const sat = 80; // 80%
+            return `hsl(221 ${sat}% ${light}%)`;
+        }
+
+        function hash(str){
+            let h = 2166136261 >>> 0;
+            for(const ch of str){ h ^= ch.codePointAt(0); h = Math.imul(h,16777619); }
+            return (h>>>0)%100000;
+        }
+
+        const tokens = TOKENS;
+        let current = Math.max(0, tokens.indexOf('それ')); // 初期フォーカスを代名詞「それ」に
+
+        function renderTokens(weights=null){
+            tokensEl.innerHTML = '';
+            tokens.forEach((tok,i)=>{
+                const span = document.createElement('button');
+                span.type = 'button';
+                span.className = 'rounded-md ring-1 ring-blue-200 px-3 py-1 text-sm cursor-pointer select-none transition-colors';
+                span.textContent = tok;
+                span.setAttribute('data-idx', String(i));
+                const w = weights ? weights[i] : (i===current?1:0);
+                // 濃さ（青の明度）で重みを表現
+                span.style.backgroundColor = weightToColor(w);
+                span.style.color = (w >= 0.7) ? '#FFFFFF' : '#111827';
+                // ほんのり内側の濃さを足して視覚差を強調
+                span.style.boxShadow = `inset 0 0 0 ${Math.round(6*w)}px rgba(30, 58, 138, ${0.12*w})`;
+                if(i===current){ span.classList.add('ring-2','ring-blue-500','font-medium'); }
+                span.title = `(id:${hash(tok)})  w=${w.toFixed(2)}`;
+                span.addEventListener('click', ()=>{ current=i; updateAttention(); });
+                tokensEl.appendChild(span);
+            });
+        }
+
+        function updateAttention(){
+            if(tokens.length===0) return;
+            const weights = attentionScores(tokens, current);
+            renderTokens(weights);
+            // 画面下への説明行を更新したい場合はここで拡張可能
+        }
+
+        // キーボード操作（任意）：Enter/矢印で注目語を移動
+        document.addEventListener('keydown', (e)=>{
+            if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); current = Math.min(current+1, tokens.length-1); updateAttention(); }
+            else if(e.key==='Enter' && e.shiftKey){ e.preventDefault(); current = Math.max(current-1, 0); updateAttention(); }
+            else if(e.key==='ArrowRight'){ current = Math.min(current+1, tokens.length-1); updateAttention(); }
+            else if(e.key==='ArrowLeft'){ current = Math.max(current-1, 0); updateAttention(); }
+        });
+
+        // 初期表示
+        renderTokens();
+        updateAttention();
+    </script>
+</body>

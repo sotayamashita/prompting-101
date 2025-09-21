@@ -1,0 +1,313 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+    <div class="p-4">
+        <div class="mx-auto max-w-3xl text-base/7 text-gray-700">
+            <!-- Top Nav: 目次 / 前へ / 次へ -->
+            <div class="mb-3 flex items-center gap-2 text-sm">
+                <a href="index.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">目次へ戻る</a>
+                <a href="03-attention.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">← 前へ</a>
+                <a href="05-transformer-to-prompt.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">次へ →</a>
+            </div>
+            <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">
+                🎲 ステップ3: 次の言葉を「予測」する
+            </h1>
+
+            <!-- 体験: 固定知シナリオで次トークン予測 -->
+            <section class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">体験：確率から次のトークンを選ぶ</h2>
+
+                <!-- 説明 -->
+                <p class="mb-4">
+                    モデルは「次に来る <strong>1トークン</strong>」の確率分布を更新し続け、サンプリング（または最大値選択）で出力を伸ばします。
+                    下のデモでは、<strong>温度（Temperature）</strong>で分布の鋭さを変え、選ばれ方の違いを体感できます。
+                </p>
+
+                <!-- シナリオ選択 -->
+                <div class="grid gap-3 mb-4">
+                    <label class="text-sm text-gray-600">シナリオを選択：</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button data-scenario="weather" class="scenario-btn rounded-lg bg-white ring-1 ring-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">天気：「今日の天気は …」</button>
+                        <button data-scenario="mail" class="scenario-btn rounded-lg bg-white ring-1 ring-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">ビジネスメールの冒頭</button>
+                        <button data-scenario="coffee" class="scenario-btn rounded-lg bg-white ring-1 ring-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">嗜好：「私はコーヒーが …」</button>
+                    </div>
+                </div>
+
+                <!-- コンテキスト表示 -->
+                <div class="bg-gray-50 border border-gray-200 rounded-md p-3 mb-4">
+                    <div class="text-sm text-gray-500 mb-1">コンテキスト</div>
+                    <div id="context" class="font-mono text-sm">今日の天気は</div>
+                </div>
+
+                <!-- 温度とシード -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end">
+                    <div>
+                        <label for="temp" class="text-sm text-gray-600">Tempreture (<span id="tempVal">0.70</span>) (0 ~ 1)</label>
+                        <input id="temp" type="range" min="0" max="1" step="0.01" value="0.7" class="w-full">
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btnOne" class="inline-flex items-center rounded-lg bg-gray-900 text-white px-3 py-2 text-sm font-medium hover:bg-gray-800">サンプル 1 回</button>
+                        <button id="btnMulti" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-2 text-sm font-medium hover:bg-gray-50">10 回</button>
+                        <button id="btnReset" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-2 text-sm font-medium hover:bg-gray-50">リセット</button>
+                    </div>
+                </div>
+
+                <!-- 候補と確率表示 -->
+                <div class="grid grid-cols-1 gap-3 mb-2">
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-2">候補トークンと確率</h3>
+                        <div id="candidates" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- 結果表示 -->
+                <div id="result" class="bg-green-50 border border-green-200 rounded-md p-3 mt-4 hidden"></div>
+
+                <!-- Tips -->
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4" role="alert">
+                    <p class="font-bold">💡 温度（Temperature）の直感</p>
+                    <ul class="list-disc pl-6 mt-2 space-y-1">
+                        <li><strong>T=0.0</strong>：常に最頻トークン（決め打ち）→再現性◎・多様性△</li>
+                        <li><strong>T=0.7</strong>：適度にゆるめ→再現性○・発想○（ワークに最適）</li>
+                        <li><strong>T=1.0</strong>：かなり拡散→創造性◎・暴走リスク↑（要制約）</li>
+                    </ul>
+                </div>
+
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4" role="alert">
+                    <p class="font-bold">💡 温度（Temperature）を理解することは、プロンプトを書くうえでなぜ重要なのか?</p>
+                    <ul class="list-disc pl-6 mt-2 space-y-1">
+                        <li><strong>再現性のスイッチ</strong>：Tを下げるほど同じ入力→同じ出力。手順書・定型文・要約の最終版に向きます。</li>
+                        <li><strong>発想のスイッチ</strong>：Tを上げるほど多様な案。ブレスト、見出し案出し、言い換え探索に向きます。</li>
+                        <li><strong>制約の重要度が変わる</strong>：高温ほど暴走しやすいので、<em>役割・目的・出力形式</em>を厳密に。数・長さ・言語なども指定。</li>
+                        <li><strong>実務のコツ</strong>：まず低温（0.0–0.2）で骨子を作り、その後 中温（0.6–0.8）で表現をリッチにする二段構え。</li>
+                        <li><strong>目安</strong>：重要書類=低温／アイデア出し=中温。迷ったら 0.7 から調整。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 比較デモ：温度0.0 vs 0.7 -->
+            <section class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">温度比較：同じ文脈で 0.0 と 0.7</h2>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <button id="btnCompare" class="inline-flex items-center rounded-lg bg-gray-900 text-white px-3 py-2 text-sm font-medium hover:bg-gray-800">同一プロンプトで比較（各20回）</button>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="bg-gray-50 border border-gray-200 rounded-md p-3">
+                        <div class="text-sm text-gray-500">Temperature 0.0（決定的）</div>
+                        <div id="hist0" class="text-sm mt-2"></div>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-md p-3">
+                        <div class="text-sm text-gray-500">Temperature 0.7（確率サンプリング）</div>
+                        <div id="hist07" class="text-sm mt-2"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // ---------- 固定シナリオ定義 ----------
+        const SCENARIOS = {
+            weather: {
+                label: '天気：「今日の天気は …」',
+                context: '今日の天気は',
+                tokens: ['晴れ','曇り','雨','とても','最高'],
+                probs:  [0.35, 0.25, 0.20, 0.15, 0.05]
+            },
+            mail: {
+                label: 'ビジネスメールの冒頭',
+                context: '（メールの冒頭）',
+                tokens: ['お世話になっております','いつもお世話になっております','こんにちは','平素より','突然のご連絡失礼します'],
+                probs:  [0.32, 0.27, 0.20, 0.12, 0.09]
+            },
+            coffee: {
+                label: '嗜好：「私はコーヒーが …」',
+                context: '私はコーヒーが',
+                tokens: ['好き','苦手','飲めない','大好き','嫌い'],
+                probs:  [0.40, 0.20, 0.10, 0.20, 0.10]
+            }
+        };
+
+        // ---------- ユーティリティ ----------
+        function softmaxWithTemperature(probs, T){
+            // T=0 は決定的：argmax を1、それ以外0
+            if (T <= 0) {
+                let maxIdx = 0;
+                for(let i=1;i<probs.length;i++) if(probs[i] > probs[maxIdx]) maxIdx = i;
+                return probs.map((_,i)=> i===maxIdx ? 1 : 0);
+            }
+            // 安定版：log-sum-exp で p^(1/T) を正規化
+            const logp = probs.map(p => Math.log(Math.max(p, 1e-12)) / T);
+            const m = Math.max(...logp);
+            const exps = logp.map(v => Math.exp(v - m));
+            const Z = exps.reduce((a,b)=> a+b, 0) || 1;
+            return exps.map(e => e / Z);
+        }
+
+        // 小さな疑似乱数（再現用）
+        function mulberry32(a){
+            return function(){
+                let t = (a += 0x6D2B79F5);
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            }
+        }
+
+        function sampleOne(items, probs, rng){
+            let r = rng();
+            let acc = 0;
+            for(let i=0;i<items.length;i++){
+                acc += probs[i];
+                if(r <= acc) return items[i];
+            }
+            return items[items.length-1];
+        }
+
+        function fmtPct(x){ return (x*100).toFixed(0) + '%'; }
+
+        function renderCandidates(el, tokens, probs){
+            el.innerHTML = '';
+            const max = Math.max(...probs);
+            tokens.forEach((tok,i)=>{
+                const p = probs[i];
+                const span = document.createElement('button');
+                span.type = 'button';
+                span.className = 'rounded-md ring-1 ring-gray-300 px-3 py-1 text-sm select-none';
+                span.textContent = tok + ' (' + fmtPct(p) + ')';
+                const light = 96 - Math.round(46*(p/max));
+                span.style.backgroundColor = `hsl(221 80% ${light}%)`;
+                span.style.color = (p/max >= 0.66) ? '#fff' : '#111827';
+                el.appendChild(span);
+            });
+        }
+
+        function renderHist(el, counts){
+            const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+            el.innerHTML = Object.entries(counts)
+                .sort((a,b)=> b[1]-a[1])
+                .map(([k,v])=> `<div class="flex items-center gap-2 mb-1"><div class="w-20 shrink-0 text-right">${k}</div><div class="grow bg-indigo-100 h-2 rounded"><div class="bg-indigo-500 h-2 rounded" style="width:${(v/total*100).toFixed(0)}%"></div></div><div class="w-10 text-right">${v}</div></div>`)
+                .join('');
+        }
+
+        // ---------- 状態 ----------
+        let current = 'weather';
+
+        // ---------- 要素取得 ----------
+        const contextEl = document.getElementById('context');
+        const tempEl = document.getElementById('temp');
+        const tempValEl = document.getElementById('tempVal');
+        const candidatesEl = document.getElementById('candidates');
+        const resultEl = document.getElementById('result');
+        const hist0El = document.getElementById('hist0');
+        const hist07El = document.getElementById('hist07');
+
+        // ---------- 初期化/更新 ----------
+        function updateCandidates(){
+            const sc = SCENARIOS[current];
+            const T = parseFloat(tempEl.value);
+            const pT = softmaxWithTemperature(sc.probs, T);
+            contextEl.textContent = sc.context;
+            renderCandidates(candidatesEl, sc.tokens, pT);
+        }
+
+        // ---------- イベント ----------
+        function applyActiveButtonStyles(activeBtn){
+            document.querySelectorAll('.scenario-btn').forEach(b=>{
+                b.classList.remove('bg-gray-900','text-white');
+                b.classList.add('bg-white','text-gray-900');
+            });
+            activeBtn.classList.remove('bg-white','text-gray-900');
+            activeBtn.classList.add('bg-gray-900','text-white');
+        }
+
+        document.querySelectorAll('.scenario-btn').forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+                current = btn.dataset.scenario;
+                applyActiveButtonStyles(btn);
+                resultEl.classList.add('hidden');
+                hist0El.innerHTML = '';
+                hist07El.innerHTML = '';
+                updateCandidates();
+            });
+        });
+
+        tempEl.addEventListener('input', ()=>{
+            tempValEl.textContent = parseFloat(tempEl.value).toFixed(2);
+            updateCandidates();
+        });
+
+        // 固定乱数シード（表示はしない）
+        const RNG_SEED_BASE = 424242;
+        function hashStr(s){
+            let h = 2166136261 >>> 0;
+            for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+            return h >>> 0;
+        }
+
+        document.getElementById('btnOne').addEventListener('click', ()=>{
+            const sc = SCENARIOS[current];
+            const T = parseFloat(tempEl.value);
+            const rng = mulberry32(RNG_SEED_BASE ^ hashStr(current) ^ Math.round(T*100));
+            const pT = softmaxWithTemperature(sc.probs, T);
+            const tok = (T<=1e-6)
+                ? sc.tokens[sc.probs.indexOf(Math.max(...sc.probs))]
+                : sampleOne(sc.tokens, pT, rng);
+            resultEl.innerHTML = `<strong>選ばれたトークン：</strong> <span class="px-2 py-0.5 rounded bg-indigo-600 text-white">${tok}</span>
+                                  <div class="text-xs text-gray-500 mt-1">T=${T.toFixed(2)}</div>`;
+            resultEl.classList.remove('hidden');
+        });
+
+        document.getElementById('btnMulti').addEventListener('click', ()=>{
+            const sc = SCENARIOS[current];
+            const T = parseFloat(tempEl.value);
+            const rng = mulberry32((RNG_SEED_BASE ^ 123) + hashStr(current) + Math.round(T*100));
+            const pT = softmaxWithTemperature(sc.probs, T);
+            const counts = Object.fromEntries(sc.tokens.map(t=>[t,0]));
+            const N = 10;
+            for(let i=0;i<N;i++){
+                const tok = (T<=1e-6)
+                    ? sc.tokens[sc.probs.indexOf(Math.max(...sc.probs))]
+                    : sampleOne(sc.tokens, pT, rng);
+                counts[tok]++;
+            }
+            resultEl.innerHTML = `<strong>${N}回のサンプル結果</strong><div class="mt-2"></div>`;
+            const div = document.createElement('div');
+            resultEl.appendChild(div);
+            renderHist(div, counts);
+            resultEl.classList.remove('hidden');
+        });
+
+        document.getElementById('btnReset').addEventListener('click', ()=>{
+            tempEl.value = 0.7;
+            tempValEl.textContent = '0.70';
+            resultEl.classList.add('hidden');
+            updateCandidates();
+        });
+
+        document.getElementById('btnCompare').addEventListener('click', ()=>{
+            const sc = SCENARIOS[current];
+            const N = 20;
+            // T=0.0: 常にargmax
+            const zeroTok = sc.tokens[sc.probs.indexOf(Math.max(...sc.probs))];
+            const counts0 = {}; counts0[zeroTok] = N;
+            renderHist(hist0El, counts0);
+
+            // T=0.7: サンプル
+            const rng = mulberry32((RNG_SEED_BASE ^ 777) + hashStr(current));
+            const pT = softmaxWithTemperature(sc.probs, 0.7);
+            const counts = Object.fromEntries(sc.tokens.map(t=>[t,0]));
+            for(let i=0;i<N;i++) counts[sampleOne(sc.tokens, pT, rng)]++;
+            renderHist(hist07El, counts);
+        });
+
+        // 初期選択と描画
+        applyActiveButtonStyles(document.querySelector('[data-scenario="weather"]'));
+        updateCandidates();
+    </script>
+</body>

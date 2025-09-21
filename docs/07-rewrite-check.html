@@ -1,0 +1,189 @@
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <style>
+    .score-pass{color:#16a34a}
+    .score-retry{color:#dc2626}
+    .stat{border:1px solid rgba(0,0,0,.08);border-radius:.5rem;padding:.5rem .75rem;background:#fafafa}
+    .btn{background:#f9fafb;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem}
+    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+    .kbd{display:inline-block;border:1px solid #d1d5db;border-bottom-width:2px;border-radius:.375rem;padding:.125rem .375rem;background:#fff}
+    textarea{white-space:pre-wrap}
+    .pill{display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:9999px;padding:.125rem .5rem;font-size:.75rem}
+    .hint{background:#fff7ed;border-left:4px solid #fb923c}
+  </style>
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+  <div class="p-4">
+    <div class="mx-auto max-w-6xl text-base/7 text-gray-700">
+      <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">🖊️ リライト(目標：75点チェック)</h1>
+
+      <!-- ルーブリックカード -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <div class="flex items-center gap-3 mb-3">
+          <h2 class="font-medium text-[#171717]"><strong>🧮 75点ルーブリック</strong></h2>
+          <span class="text-xs text-gray-500">（チェックすると合計に反映）</span>
+          <div class="ml-auto grid grid-cols-3 gap-2">
+            <div class="stat text-center"><div class="text-xs text-gray-500">合計</div><div id="score" class="text-2xl font-bold">0</div></div>
+            <div class="stat text-center"><div class="text-xs text-gray-500">閾値</div><div class="text-2xl font-bold">75</div></div>
+            <div class="stat text-center"><div class="text-xs text-gray-500">判定</div><div id="judge" class="text-2xl font-bold score-retry">RETRY</div></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 class="font-semibold mb-2">[コア6]（計85点）</h3>
+            <ul class="space-y-2">
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="20" class="crit" data-id="goal"> 目的（成功条件）が一文で先頭にある <span class="pill">+20</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="10" class="crit" data-id="role"> 役割＋トーンで視点を固定 <span class="pill">+10</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="15" class="crit" data-id="ctx"> 文脈を見出し/タグで区切り、混ざっていない <span class="pill">+15</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="15" class="crit" data-id="steps"> 手順・ルールが番号付きで明示 <span class="pill">+15</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="15" class="crit" data-id="format"> 出力形式を厳密指定（JSON/表/見出し） <span class="pill">+15</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="10" class="crit" data-id="examples"> 例（Few-shot）が1–2件（境界例含む） <span class="pill">+10</span></label></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2">[オプション4]（計15点）</h3>
+            <ul class="space-y-2">
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="5" class="crit" data-id="reason"> 思考方針・自己検証を付記 <span class="pill">+5</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="5" class="crit" data-id="final"> Final Reminders（最後に守る3点） <span class="pill">+5</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="3" class="crit" data-id="prefilled"> Prefilled Responseで枠を固定 <span class="pill">+3</span></label></li>
+              <li><label class="flex items-center gap-2"><input type="checkbox" data-score="2" class="crit" data-id="history"> 会話履歴を要約して反映 <span class="pill">+2</span></label></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hint p-3 mt-4 rounded">
+          <p class="text-sm"><strong>コツ:</strong> まず <span class="pill">コア6</span> を満たすだけで <strong>85点</strong> に到達できます。足りない項目を1つだけ足す「小さなリライト」を繰り返すのが最速です。</p>
+        </div>
+      </div>
+
+      <!-- リライトワーク -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <div class="flex items-center gap-3 mb-3">
+          <h2 class="font-medium text-[#171717]"><strong>✍️ リライトワーク</strong></h2>
+          <span class="text-xs text-gray-500">（不足点から右側に改善骨子を自動生成）</span>
+          <div class="ml-auto flex items-center gap-2">
+            <button id="buildOne" class="btn">不足を1つだけ追加</button>
+            <button id="buildAll" class="btn primary">不足をすべて反映</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 class="font-semibold mb-1">初稿プロンプト</h3>
+            <textarea id="draft" class="w-full border rounded px-3 py-2 h-56" placeholder="ここに初稿プロンプトを貼り付け"></textarea>
+            <div class="text-xs text-gray-500 mt-1">ヒント: 目的・対象・文字数・形式が無い場合は高配点の不足になりがちです。</div>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1">リライト案（不足点の骨子）</h3>
+            <textarea id="rewrite" class="w-full border rounded px-3 py-2 h-56" placeholder="右上のボタンで自動生成。必要に応じて肉付けしてください。"></textarea>
+            <div id="todo" class="text-xs text-gray-600 mt-1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 30秒タイマー -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <div class="flex items-center gap-3">
+          <h2 class="font-medium text-[#171717]"><strong>⏱️ 30秒ペアチェック用タイマー</strong></h2>
+          <div class="ml-auto flex items-center gap-2">
+            <button id="tStart" class="btn primary">開始</button>
+            <button id="tPause" class="btn">一時停止</button>
+            <button id="tReset" class="btn">リセット</button>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="w-full bg-gray-200 rounded h-3 overflow-hidden">
+            <div id="bar" class="h-3 bg-blue-600" style="width:0%"></div>
+          </div>
+          <div class="text-center mt-2 text-2xl font-bold" id="tLabel">30.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // スコア計算
+    const scoreEl = document.getElementById('score');
+    const judgeEl = document.getElementById('judge');
+    const critEls = Array.from(document.querySelectorAll('.crit'));
+    function recalc(){
+      const sum = critEls.reduce((s,el)=> s + (el.checked? Number(el.dataset.score):0), 0);
+      scoreEl.textContent = sum;
+      if(sum>=75){ judgeEl.textContent='PASS'; judgeEl.classList.add('score-pass'); judgeEl.classList.remove('score-retry'); }
+      else{ judgeEl.textContent='RETRY'; judgeEl.classList.add('score-retry'); judgeEl.classList.remove('score-pass'); }
+      renderTodo();
+    }
+    critEls.forEach(el=> el.addEventListener('change', recalc));
+    recalc();
+
+    // 不足リスト→リライト骨子
+    const id2text = {
+      goal: '目的（成功条件）: {一文で明記。誰向けに/何を/どれくらいで/評価基準は何か}',
+      role: '役割・トーン: {例: あなたは◯◯の専門家です。丁寧体/口調指定…}',
+      ctx: '文脈（背景/対象/参照/制約）:\n- 対象: {...}\n- 前提/入力: {...}\n- 制約: {...}',
+      steps: '手順・ルール（番号付き）:\n1) {...}\n2) {...}\n禁止: {...}',
+      format: '出力形式: {JSON/表/見出し}（keys/列名/順序/言語/長さなどを厳密指定）',
+      examples: '例（Few-shot）:\n入力: {...}\n期待出力: {...}',
+      reason: '思考方針: {段階的に考え、最後に事実整合を自己検証}',
+      final: 'Final Reminders（最後に再確認）: {- 事実のみ - 禁止: 新情報の創作 - 語調は丁寧体}',
+      prefilled: 'Prefilled response: <response>{ここに本文}</response>',
+      history: '会話履歴反映: {直近のやりとり要約/引用}'
+    };
+
+    function missingIds(){
+      return critEls.filter(el=>!el.checked).map(el=>el.dataset.id);
+    }
+
+    function buildFromMissing(count){
+      const ids = missingIds();
+      if(ids.length===0){ return; }
+      const base = document.getElementById('rewrite').value.trim();
+      const add = ids.slice(0, count).map(id=> '- ' + id2text[id]).join('\n\n');
+      const draft = document.getElementById('draft').value.trim();
+      const merged = `${base? base+'\n\n':''}【不足の補完骨子】\n${add}\n\n【原文（参考）】\n${draft}`.trim();
+      document.getElementById('rewrite').value = merged;
+      renderTodo();
+    }
+
+    document.getElementById('buildOne').addEventListener('click', ()=> buildFromMissing(1));
+    document.getElementById('buildAll').addEventListener('click', ()=> buildFromMissing(999));
+
+    function renderTodo(){
+      const ids = missingIds();
+      const tips = ids.map(id=>({
+        goal: 'Doneを一文で先頭に。対象/長さ/評価基準を含める。',
+        role: '役割と語調を宣言し視点を固定。',
+        ctx: '背景・対象・制約を見出し/タグで区切る。',
+        steps: '手順を番号付きで明示。最後に禁止事項。',
+        format: 'JSON/表/見出し等で鍵・順序・言語を固定。',
+        examples: '1–2件のFew-shot。境界例を含める。',
+        reason: '「段階的に考える」「自己検証する」を1行で指示。',
+        final: '終盤に守るルールを3点再掲。',
+        prefilled: 'スケルトンを先に提示し整形を安定化。',
+        history: '直近のやりとりの要旨を1–2行で反映。'
+      }[id]));
+      const html = ids.length? '不足（優先度順）: ' + tips.map((t,i)=> `${i+1}. ${t}`).join(' / ') : '不足はありません。実行可能な状態です。';
+      document.getElementById('todo').textContent = html;
+    }
+    renderTodo();
+
+    // 30秒タイマー
+    let remain = 30.0; let timer = null; const bar = document.getElementById('bar'); const label = document.getElementById('tLabel');
+    function tick(){
+      remain = Math.max(0, remain - 0.1);
+      const pct = 100 * (1 - remain/30.0);
+      bar.style.width = pct + '%';
+      label.textContent = remain.toFixed(1);
+      if(remain<=0){ clearInterval(timer); timer=null; }
+    }
+    document.getElementById('tStart').addEventListener('click', ()=>{ if(!timer) timer = setInterval(tick,100); });
+    document.getElementById('tPause').addEventListener('click', ()=>{ if(timer){ clearInterval(timer); timer=null; } });
+    document.getElementById('tReset').addEventListener('click', ()=>{ remain=30.0; bar.style.width='0%'; label.textContent='30.0'; });
+  </script>
+</body>
+

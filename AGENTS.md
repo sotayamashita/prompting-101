@@ -1,0 +1,2 @@
+- Chat with me in Japanese
+- Output is also in Japanese

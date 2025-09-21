@@ -1,0 +1,245 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <style>
+        /* 最小限のアニメーション定義（Tailwind任意値で使用） */
+        @keyframes blink {
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            50.01%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.08);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+    <div class="p-4 border-b border-[rgba(0,0,0,.08)]">
+        <div class="mx-auto max-w-3xl text-base/7 text-gray-700">
+            <!-- Top Nav: 目次 / 前へ / 次へ -->
+            <div class="mb-3 flex items-center gap-2 text-sm">
+                <a href="index.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">目次へ戻る</a>
+                <span class="inline-flex items-center rounded-lg bg-gray-100 text-gray-400 px-3 py-1.5 ring-1 ring-gray-200 cursor-not-allowed" aria-disabled="true">← 前へ</span>
+                <a href="02-tokenization.html" class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-3 py-1.5 hover:bg-gray-50">次へ →</a>
+            </div>
+            <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">
+                🦜 イントロダクション
+            </h1>
+            <!-- 1) 目的 -->
+            <section
+                class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">目的</h2>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p class="leading-7">
+                        非エンジニアが、LLM（Transformer）の基本動作を直感的に理解し、その理解を使って「明確で再現性のある良いプロンプト」を自力で設計・改善できるようになること。
+                    </p>
+                </div>
+            </section>
+
+            <!-- 2) アジェンダ -->
+            <section
+                class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">アジェンダ</h2>
+                <div class="grid [grid-template-columns:120px_1fr] gap-x-4 gap-y-4 items-start">
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        00:00–02:00
+                    </div>
+                    <div>イントロ（目的・流れ共有）</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        02:00–06:00
+                    </div>
+                    <div>ステップ1 言葉を「トークン」に分解（説明/体験）</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        06:00–11:00
+                    </div>
+                    <div>ステップ2 どの言葉に「注目」するか（説明/体験）</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        11:00–16:00
+                    </div>
+                    <div>ステップ3 次の言葉を「予測」する（説明/体験）</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        16:00–17:00
+                    </div>
+                    <div>ブリッジ：なぜ4要素が効くのか</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        17:00–24:00
+                    </div>
+                    <div>プロンプト設計（説明/個人ワーク）</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        24:00–28:00
+                    </div>
+                    <div>リライト＆75点チェック</div>
+                    <div class="text-gray-500 [font-variant-numeric:tabular-nums]">
+                        28:00–30:00
+                    </div>
+                    <div>まとめ・Q&A</div>
+                </div>
+            </section>
+
+            <!-- 3) Promptとは -->
+            <section
+                class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Prompt とは</h2>
+                <div class="flex flex-col gap-4 mb-4 w-full">
+                    定義：
+                    <p class="bg-gray-50 border border-gray-200 rounded-lg p-4">AIに与える「指示や材料」をひとかたまりにした入力。</p>
+                </div>
+
+                <div class="flex flex-col gap-4 mb-4 w-full">
+                    入力：
+                    <p id="promptBox"
+                        class="bg-white ring-1 ring-gray-200 rounded-md p-4 font-mono text-sm whitespace-pre-line break-words text-left">あなたは親切な旅行プランナーです。初めて東京を訪れる家族連れに、半日観光プランを3つ、見出し＋箇条書きで日本語提案してください。制約: 所要時間4時間以内、徒歩中心。</p>
+                    出力：
+                    <div id="outputBox"
+                        class="bg-white ring-1 ring-gray-200 rounded-md p-4 min-h-24 font-mono text-sm whitespace-pre-line break-words text-left"
+                        aria-live="polite"></div>
+                </div>
+
+                <div class="flex gap-4 mb-4 items-center">
+                    <button id="play"
+                        class="inline-flex items-center rounded-lg bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">
+                        再生
+                    </button>
+                    <button id="pause"
+                        class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                        一時停止
+                    </button>
+                    <button id="reset"
+                        class="inline-flex items-center rounded-lg bg-white ring-1 ring-gray-300 text-gray-900 px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                        リセット
+                    </button>
+                    <span id="status" class="text-gray-500 ml-4">待機中</span>
+                </div>
+
+                <div id="tokens" class="flex flex-wrap gap-4 mt-4"></div>
+                <p class="text-gray-500 mt-4">
+                    このデモは、LLMが“次に来る小さな断片（トークン）”を一つずつ予測して文章を伸ばす様子を可視化します。上で文字が順に出て、区切りで確定したかたまりを下にトークンとして並べます。実際のトークンはサブワード単位ですが、概念理解のために簡略表示しています。
+                </p>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // タイピング対象文（短め）
+        const text =
+            "了解しました。以下は半日（約4時間）で楽しめる家族向けの東京プランです。\n\n" +
+            "1) 上野ミニ探検\n- 上野公園 → 動物園 → 博物館（興味に合わせて）\n- 休憩は公園のベンチで。徒歩中心\n\n" +
+            "2) 浅草タイムトラベル\n- 雷門 → 仲見世 → 隅田公園で写真\n- たい焼きで小腹満たし\n\n" +
+            "3) 皇居まわりの緑散歩\n- 和田倉噴水公園 → 二重橋フォト → 楠正成像\n- ベビーカーでも歩きやすい\n";
+
+        const outputBox = document.getElementById("outputBox");
+        const tokensBox = document.getElementById("tokens");
+        const statusEl = document.getElementById("status");
+        const playBtn = document.getElementById("play");
+        const pauseBtn = document.getElementById("pause");
+        const resetBtn = document.getElementById("reset");
+
+        let i = 0;
+        let timer = null;
+        let buf = "";
+
+        function step() {
+            if (i >= text.length) {
+                stop();
+                return;
+            }
+            const ch = text[i++];
+            outputBox.textContent += ch;
+            buf += ch;
+            // 簡易トークン切り出し：空白/改行/句読点で確定
+            if (/\s|[、。!！?？]/.test(ch)) {
+                const token = buf.trim();
+                if (token) addToken(token);
+                buf = "";
+            }
+        }
+
+        function addToken(t) {
+            const el = document.createElement("span");
+            el.className =
+                "inline-block bg-white ring-1 ring-gray-200 rounded-md px-2 py-0.5 text-gray-700";
+            el.textContent = t;
+            tokensBox.appendChild(el);
+            // 古いトークンを適度に間引く
+            if (tokensBox.children.length > 20) {
+                tokensBox.removeChild(tokensBox.firstChild);
+            }
+        }
+
+        function play() {
+            if (timer) return;
+            status("生成中…");
+            timer = setInterval(step, 22);
+            showCursor(true);
+        }
+        function pause() {
+            if (!timer) return;
+            clearInterval(timer);
+            timer = null;
+            status("一時停止");
+            showCursor(false);
+        }
+        function stop() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            status("完了");
+            showCursor(false);
+        }
+        function reset() {
+            stop();
+            i = 0;
+            buf = "";
+            outputBox.textContent = "";
+            tokensBox.innerHTML = "";
+            status("待機中");
+            showCursor(false);
+        }
+        function status(s) {
+            statusEl.textContent = s;
+        }
+
+        // 疑似カーソル（Tailwind任意値アニメーション）
+        const cursor = document.createElement("span");
+        cursor.className =
+            "inline-block w-2 h-[1.1em] bg-gray-900 ml-4 align-[-0.2em] animate-[blink_1s_steps(1)_infinite]";
+        function showCursor(on) {
+            if (on) {
+                if (!outputBox.querySelector("span[aria-hidden]")) {
+                    cursor.setAttribute("aria-hidden", "true");
+                    outputBox.appendChild(cursor);
+                }
+            } else {
+                cursor.remove();
+            }
+        }
+
+        playBtn.addEventListener("click", play);
+        pauseBtn.addEventListener("click", pause);
+        resetBtn.addEventListener("click", reset);
+    </script>
+</body>

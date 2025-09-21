@@ -1,0 +1,342 @@
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <style>
+    /* TailwindのJIT動的クラスに依存しない明示スタイル */
+    .state-btn{ background:#f9fafb; border:1px solid #d1d5db; border-radius:6px; padding:.375rem .75rem; color:#111827; }
+    .state-btn.is-active{ background:#2563eb; color:#fff; border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.35); }
+    .badge{ display:inline-block; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:9999px; padding:.125rem .5rem; font-size:.75rem; }
+  </style>
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+  <div class="p-4">
+    <div class="mx-auto max-w-5xl text-base/7 text-gray-700">
+      <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">
+        🛣️ Transformer原理から導くプロンプト設計
+      </h1>
+
+      <!-- 原理→レバー マップ -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <h2 class="font-medium mb-4 text-[#171717]"><strong>🧭 原理 → レバー（対応マップ）</strong></h2>
+        <p class="mb-4">Transformerで学んだ仕組みを、プロンプト設計のレバーに直結させます。</p>
+        <div class="space-y-3">
+          <details class="border rounded p-3">
+            <summary class="cursor-pointer font-semibold">トークン化 → 文脈・例</summary>
+            <p class="mt-2 text-sm text-gray-600">曖昧語や造語は分割が揺れるため、<strong>定義語・固有名詞・数値・単位</strong>を文脈に明記し、代表表記は例で固定。</p>
+          </details>
+          <details class="border rounded p-3">
+            <summary class="cursor-pointer font-semibold">注意機構 → 役割＋区切り</summary>
+            <p class="mt-2 text-sm text-gray-600">役割宣言で重要語へ注意集中。見出し/タグで情報を区切り、<strong>近接配置</strong>で関連語を誘導。</p>
+          </details>
+          <details class="border rounded p-3">
+            <summary class="cursor-pointer font-semibold">次トークン予測 → 手順・ルール/出力形式/温度</summary>
+            <p class="mt-2 text-sm text-gray-600">手順で推論順を固定、制約で候補集合を縮小、出力形式で構造固定。重要タスクは<strong>低温（0に近く）</strong>。</p>
+          </details>
+          <details class="border rounded p-3">
+            <summary class="cursor-pointer font-semibold">会話の最終上書き → Final Reminders</summary>
+            <p class="mt-2 text-sm text-gray-600">直近の指示が強く効くため、終盤に要点を短く再掲。</p>
+          </details>
+          <details class="border rounded p-3 md:col-span-2">
+            <summary class="cursor-pointer font-semibold">出力の安定化 → Prefilled Response</summary>
+            <p class="mt-2 text-sm text-gray-600">JSONやタグの<strong>スケルトン</strong>を先に提示してkey名や順序を固定。</p>
+          </details>
+        </div>
+      </div>
+
+      <!-- ミニデモ：ベース→介入A→介入B -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <h2 class="font-medium mb-4 text-[#171717]"><strong>🎛️ ミニデモ：レバーで分布はどう偏る？（30秒）</strong></h2>
+        <p class="mb-3">同じタスクに対して、<strong>役割・出力形式・手順</strong>を足すだけで出力の整合性がどう変わるかを疑似的に可視化します（オフライン動作）。</p>
+
+        <div class="flex flex-wrap gap-2 mb-3" role="group" aria-label="デモ状態切替">
+          <button id="state-base" class="state-btn" aria-pressed="true" title="初期状態">ベース</button>
+          <button id="state-a" class="state-btn" aria-pressed="false" title="役割とトーンを追加">介入A（役割＋トーン）</button>
+          <button id="state-b" class="state-btn" aria-pressed="false" title="出力形式と手順を追加">介入B（JSON＋手順）</button>
+          <div class="ml-auto flex items-center gap-2">
+            <label class="text-sm text-gray-600">温度</label>
+            <input id="temp" type="range" min="0" max="1" step="0.1" value="0.7" class="w-40">
+            <span id="tempLabel" class="text-sm text-gray-600">0.7（多様）</span>
+          </div>
+        </div>
+        <div class="mb-2 text-sm text-gray-600">現在の選択: <span id="stateLabel" class="badge">ベース</span></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 class="font-semibold mb-2">プロンプト（表示用）</h3>
+            <pre id="promptView" class="whitespace-pre-wrap text-sm bg-[#0f172a] text-[#e2e8f0] rounded p-3 leading-6"></pre>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2">出力例（疑似）</h3>
+            <pre id="outputView" class="whitespace-pre-wrap text-sm bg-[#0f172a] text-[#e2e8f0] rounded p-3 leading-6"></pre>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          <div class="border rounded p-3">
+            <div class="text-xs text-gray-500">Top-1確率（疑似）</div>
+            <div id="mTop1" class="text-2xl font-bold">—</div>
+          </div>
+          <div class="border rounded p-3">
+            <div class="text-xs text-gray-500">Top-3合計（疑似）</div>
+            <div id="mTop3" class="text-2xl font-bold">—</div>
+          </div>
+          <div class="border rounded p-3">
+            <div class="text-xs text-gray-500">JSON整形率（疑似）</div>
+            <div id="mJson" class="text-2xl font-bold">—</div>
+          </div>
+        </div>
+
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 my-4" role="alert">
+          <p class="font-bold">注意</p>
+          <p>このデモは学習のための<strong>疑似指標</strong>です。実際のモデル挙動はモデル・設定・文脈に依存します。</p>
+        </div>
+      </div>
+
+      <!-- C案テンプレ ジェネレータ（固定知/自由入力 切替） -->
+      <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+        <h2 class="font-medium mb-2 text-[#171717]"><strong>🧩 テンプレ ジェネレータ</strong></h2>
+        <p class="mb-3">固定サンプルから始める／自由入力に切替できます。右側に最終テンプレを生成します。</p>
+
+        <div class="flex items-center gap-2 mb-3">
+          <label class="text-sm text-gray-600">モード</label>
+          <select id="mode" class="border rounded px-2 py-1">
+            <option value="preset">固定知サンプル</option>
+            <option value="free">自由入力</option>
+          </select>
+          <div id="presetWrap" class="flex items-center gap-2 ml-4">
+            <label class="text-sm text-gray-600">サンプル</label>
+            <select id="preset" class="border rounded px-2 py-1">
+              <option value="press">プレスリリース（新機能発表）</option>
+              <option value="recipe">レシピ（時短パスタ）</option>
+              <option value="bug">バグ報告テンプレ（フロントエンド）</option>
+              <option value="travel">旅行プラン（週末京都）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div id="formCol" class="space-y-3">
+            <div>
+              <label class="text-sm">1) 役割・トーン</label>
+              <input id="fRole" class="w-full border rounded px-3 py-2" placeholder="例: あなたは広報担当です。丁寧体で、断定は避ける。" />
+            </div>
+            <div>
+              <label class="text-sm">2) 目的（成功条件・一文）</label>
+              <input id="fGoal" class="w-full border rounded px-3 py-2" placeholder="何をもってDoneか一文で" />
+            </div>
+            <div>
+              <label class="text-sm">3) 文脈（背景/対象/制約）</label>
+              <textarea id="fCtx" class="w-full border rounded px-3 py-2 h-28" placeholder="対象・読み手・前提・制約など"></textarea>
+            </div>
+            <div>
+              <label class="text-sm">4) 手順・ルール</label>
+              <textarea id="fSteps" class="w-full border rounded px-3 py-2 h-24" placeholder="1) ... 2) ... 禁止事項: ..."></textarea>
+            </div>
+            <div>
+              <label class="text-sm">5) 出力形式</label>
+              <input id="fFormat" class="w-full border rounded px-3 py-2" placeholder="例: JSON(keys: title, body, cta)・表・見出し順など" />
+            </div>
+            <div>
+              <label class="text-sm">6)(任意)  例（Few-shot）</label>
+              <textarea id="fExamples" class="w-full border rounded px-3 py-2 h-20" placeholder="入出力の最小例"></textarea>
+            </div>
+
+              <div>
+                <label class="text-sm">(任意) 思考方針</label>
+                <input id="fReason" class="w-full border rounded px-3 py-2" placeholder="例: 段階的に考えて最終検証" />
+              </div>
+              <div>
+                <label class="text-sm">(任意) Final Reminders</label>
+                <input id="fFinal" class="w-full border rounded px-3 py-2" placeholder="最後に守るルール3点" />
+              </div>
+
+            <div>
+              <label class="text-sm">(任意) Prefilled Response</label>
+              <textarea id="fSkeleton" class="w-full border rounded px-3 py-2 h-20" placeholder='<response>{ここに本文}</response> など'></textarea>
+            </div>
+
+            <button id="gen" class="px-3 py-2 rounded border bg-gray-50">テンプレ生成</button>
+          </div>
+
+          <div>
+            <h3 class="font-semibold mb-2">生成されたテンプレ</h3>
+            <pre id="outTemplate" class="whitespace-pre-wrap text-sm bg-[#0f172a] text-[#e2e8f0] rounded p-3 min-h-64"></pre>
+            <div class="flex gap-2 mt-2">
+              <button id="copyTpl" class="px-3 py-1 rounded border bg-gray-50">コピー</button>
+              <button id="reset" class="px-3 py-1 rounded border bg-gray-50">リセット</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ————————————————————————————————
+    // ミニデモ（疑似）
+    // ————————————————————————————————
+    const prompts = {
+      base: `タスク: 製品アップデートについて書いて。
+長さや対象、形式の指定は特になし。`,
+      a: `あなたは広報担当です。丁寧体で、断定表現は避けてください。
+目的: 新機能アップデートの概要を読者に分かりやすく伝えること。`,
+      b: `あなたは広報担当です。丁寧体で、断定表現は避けてください。
+目的: 新機能アップデートの概要をITメディア向けに300字で伝えること。
+手順: 1) 事実のみ抜粋 2) 利点を2点 3) 禁止: 新情報の創作
+出力形式: JSON (keys: title, body, cta)`
+    };
+
+    const outputs = {
+      base: `最近のアップデートについての紹介です。さまざまな改善が行われました。ぜひお試しください。`,
+      a: `今回のアップデートでは、利便性の向上を目的とした改善を中心にお伝えします。具体的な変更点については、読みやすさを優先して要点をまとめます。`,
+      b: `{
+  "title": "新機能アップデートを公開",
+  "body": "検索速度を平均30%改善。テンプレ管理で再利用性が向上。利用シーンを2つ挙げ、導入の第一歩を案内。",
+  "cta": "詳細と事例はこちら"
+}`
+    };
+
+    const metrics = {
+      base: { top1: 0.28, top3: 0.62, json: 0.18 },
+      a:    { top1: 0.41, top3: 0.76, json: 0.35 },
+      b:    { top1: 0.63, top3: 0.89, json: 0.92 }
+    };
+
+    const promptView = document.getElementById('promptView');
+    const outputView = document.getElementById('outputView');
+    const mTop1 = document.getElementById('mTop1');
+    const mTop3 = document.getElementById('mTop3');
+    const mJson = document.getElementById('mJson');
+
+    function setState(key){
+      promptView.textContent = prompts[key];
+      outputView.textContent = outputs[key];
+      const t = parseFloat(document.getElementById('temp').value);
+      // 疑似的に温度でTop-1を少し下げ、Top-3を少し上げる
+      const base = metrics[key];
+      const top1 = Math.max(0, base.top1 - 0.15 * (t - 0.2));
+      const top3 = Math.min(1, base.top3 + 0.10 * (t - 0.2));
+      const json = base.json; // JSON整形率は温度の影響小として固定
+      mTop1.textContent = (top1*100).toFixed(0) + '%';
+      mTop3.textContent = (top3*100).toFixed(0) + '%';
+      mJson.textContent = (json*100).toFixed(0) + '%';
+
+      // ボタンのアクティブ表示（Tailwind依存なし）
+      for (const id of ['state-base','state-a','state-b']) {
+        const el = document.getElementById(id);
+        el.classList.remove('is-active');
+        el.setAttribute('aria-pressed','false');
+      }
+      const map = { base:'state-base', a:'state-a', b:'state-b' };
+      const active = document.getElementById(map[key]);
+      active.classList.add('is-active');
+      active.setAttribute('aria-pressed','true');
+      // ラベル更新
+      const labelText = key==='base' ? 'ベース' : key==='a' ? '介入A（役割＋トーン）' : '介入B（JSON＋手順）';
+      document.getElementById('stateLabel').textContent = labelText;
+    }
+
+    document.getElementById('state-base').addEventListener('click', ()=>setState('base'));
+    document.getElementById('state-a').addEventListener('click', ()=>setState('a'));
+    document.getElementById('state-b').addEventListener('click', ()=>setState('b'));
+    document.getElementById('temp').addEventListener('input', (e)=>{
+      document.getElementById('tempLabel').textContent = `${e.target.value}（${e.target.value<=0.2?'安定':e.target.value>=0.8?'多様':'中庸'}）`;
+      // 再計算（現在のキーを推定）
+      if (document.getElementById('state-b').classList.contains('bg-blue-600')) setState('b')
+      else if (document.getElementById('state-a').classList.contains('bg-blue-600')) setState('a')
+      else setState('base');
+    });
+
+    // 初期
+    setState('base');
+
+    // ————————————————————————————————
+    // C案テンプレ ジェネレータ
+    // ————————————————————————————————
+    const presets = {
+      press: {
+        role: 'あなたは広報担当です。丁寧体で、断定表現は避けてください。',
+        goal: 'ITメディア向けに新機能を300字で紹介する（CTAを1文）。',
+        ctx: '対象: ITメディア読者\n前提: 既存ユーザーにも有益な改善\n制約: 事実のみ、数値は丸めない',
+        steps: '1) 主な変更点を2点抽出\n2) 利点を具体例で2つ\n3) 禁止: 新情報の創作',
+        format: 'JSON (keys: title, body, cta)',
+        examples: '入力: 機能A(検索速度+30%)、機能B(テンプレ共有)\n期待出力: title/body/cta を含むJSON'
+      },
+      recipe: {
+        role: 'あなたは料理研究家です。丁寧体で、材料は国内表記に統一してください。',
+        goal: '平日夜に15分で作れるパスタレシピを作成する。',
+        ctx: '対象: 2人分\n制約: 電子レンジは使わない、洗い物は最小限',
+        steps: '1) 材料と分量\n2) 手順（番号付き）\n3) 片付けのコツを1行',
+        format: 'Markdown（見出し: 材料/手順/コツ）',
+        examples: '入力: トマト缶/ツナ缶/玉ねぎ/にんにく\n期待出力: 材料、手順3–5行、最後にコツ'
+      },
+      bug: {
+        role: 'あなたはQAです。丁寧体で、再現手順は厳密に書いてください。',
+        goal: 'フロントエンドの表示崩れを開発者に共有するチケットを作る。',
+        ctx: '環境: macOS/Chrome 最新\n対象: トップページのヒーロー画像\n制約: スクリーンショットIDを含める',
+        steps: '1) 期待結果\n2) 実際結果\n3) 再現手順\n4) 追加情報（ログ/SS）',
+        format: 'YAML (keys: expected, actual, steps, evidence)',
+        examples: '入力: 768pxで崩れる\n期待出力: 再現手順は3ステップ以上'
+      },
+      travel: {
+        role: 'あなたは旅行プランナーです。丁寧体で、過度な宣伝表現は避けてください。',
+        goal: '週末の京都1泊2日モデルプランを作る（雨天代替案つき）。',
+        ctx: '対象: 20–40代カップル\n制約: 予算2万円/人、移動は公共交通',
+        steps: '1) 1日目午前/午後/夜\n2) 2日目午前/午後\n3) 雨天代替案',
+        format: 'テーブル（時間帯/場所/所要/費用/メモ）',
+        examples: '入力: 清水寺/祇園/嵐山\n期待出力: 各行に費用目安を含む'
+      }
+    };
+
+    const modeSel = document.getElementById('mode');
+    const presetSel = document.getElementById('preset');
+    const presetWrap = document.getElementById('presetWrap');
+    const fRole = document.getElementById('fRole');
+    const fGoal = document.getElementById('fGoal');
+    const fCtx = document.getElementById('fCtx');
+    const fSteps = document.getElementById('fSteps');
+    const fFormat = document.getElementById('fFormat');
+    const fExamples = document.getElementById('fExamples');
+    const fReason = document.getElementById('fReason');
+    const fFinal = document.getElementById('fFinal');
+    const fSkeleton = document.getElementById('fSkeleton');
+    const outTemplate = document.getElementById('outTemplate');
+
+    function fillPreset(key){
+      const p = presets[key];
+      fRole.value = p.role; fGoal.value = p.goal; fCtx.value = p.ctx;
+      fSteps.value = p.steps; fFormat.value = p.format; fExamples.value = p.examples;
+      fReason.value = '短く段階的に考えてから回答し、最後に自己検証を1行。';
+      fFinal.value = '事実のみ/禁止: 新情報の創作/語調は丁寧体';
+      fSkeleton.value = '';
+    }
+
+    function buildTemplate(){
+      const tpl = `【コア】\n役割・トーン: ${fRole.value}\n目的（成功条件）: ${fGoal.value}\n文脈（背景/参照）:\n${fCtx.value}\n手順・ルール:\n${fSteps.value}\n出力形式: ${fFormat.value}\n例（Few-shot・任意）:\n${fExamples.value}\n\n【オプション】\n思考方針: ${fReason.value}\n重要ポイントの再確認: ${fFinal.value}\nPrefilled response（任意）:\n${fSkeleton.value}`.trim();
+      outTemplate.textContent = tpl;
+    }
+
+    document.getElementById('gen').addEventListener('click', buildTemplate);
+    document.getElementById('copyTpl').addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(outTemplate.textContent); }catch(e){}
+    });
+    document.getElementById('reset').addEventListener('click', ()=>{
+      fRole.value = fGoal.value = fFormat.value = fReason.value = fFinal.value = '';
+      fCtx.value = fSteps.value = fExamples.value = fSkeleton.value = '';
+      outTemplate.textContent = '';
+    });
+
+    modeSel.addEventListener('change', ()=>{
+      const isPreset = modeSel.value === 'preset';
+      presetWrap.classList.toggle('hidden', !isPreset);
+      if(isPreset){ fillPreset(presetSel.value); }
+    });
+    presetSel.addEventListener('change', ()=> fillPreset(presetSel.value));
+
+    // 初期: 固定知サンプル（プレスリリース）
+    fillPreset('press');
+  </script>
+</body>
