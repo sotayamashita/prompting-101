@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Context Protocol (MCP)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen antialiased bg-[#FAFAFA] font-[Inter]">
+    <div class="p-4">
+        <div class="mx-auto max-w-3xl text-base/7 text-gray-700">
+            <h1 class="text-xl font-bold border-l border-[rgba(0,0,0,.08)] pl-4 bg-blue-100 py-4">
+                🔌 Model Context Protocol (MCP)
+            </h1>
+
+            <!-- 概要カード -->
+            <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="font-medium mb-4 text-[#171717]"><strong>📖 プレゼンテーション概要</strong></h2>
+                <p class="mb-4">非エンジニア向けに、Model Context Protocol (MCP)を直感的に理解し、業務改善に活用できるようにするための30分間のセッションです。</p>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-4 my-4" role="alert">
+                    <p class="font-bold">🎯 このセッションで学べること</p>
+                    <ul class="list-disc pl-6 mt-2 space-y-1">
+                        <li>MCPの基本概念（USB-Cポートの比喩で理解）</li>
+                        <li>実際の業務での活用方法</li>
+                        <li>Claude DesktopとVS Codeでの実践デモ</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 目次カード -->
+            <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="font-medium mb-4 text-[#171717]"><strong>📋 セッション構成（30分）</strong></h2>
+
+                <ol class="list-decimal pl-6 space-y-3">
+                    <li>
+                        <a href="01-intro.html" class="group inline-flex items-center gap-2 text-blue-700 hover:underline">
+                            <strong>イントロダクション（5分）</strong>
+                        </a>
+                        <ul class="list-disc pl-6 mt-1 text-sm text-gray-600">
+                            <li>MCPとは何か：USB-Cポートの比喩で理解</li>
+                            <li>なぜMCPが必要なのか：業務ツール連携の課題</li>
+                            <li>今日学ぶこと：基本と応用の2つのデモ</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <span><strong>デモ1：Claude Desktopで基本を理解（10分）</strong></span>
+                        
+                    </li>
+                    <li>
+                        <span><strong>デモ2：VS Code + Claude Codeで応用（10分）</strong></span>
+                        
+                    </li>
+                    <li>
+                        <span><strong>実践Tips & トラブルシューティング（3分）</strong></span>
+                        
+                    </li>
+                    <li>
+                        <span><strong>Q&A・まとめ（2分）</strong></span>
+                        
+                    </li>
+                </ol>
+            </div>
+
+            <!-- 参考リソース -->
+            <div class="bg-white rounded-md my-4 p-4 border shadow-[0_2px_2px_rgba(0,0,0,0.04)] border-[rgba(0,0,0,.08)]">
+                <h2 class="font-medium mb-4 text-[#171717]"><strong>🔗 参考リンク</strong></h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-sm mb-2">公式ドキュメント</h3>
+                        <ul class="list-disc pl-6 text-sm space-y-1">
+                            <li><a href="https://docs.claude.com/en/docs/claude-code/mcp" target="_blank" class="text-blue-700 hover:underline">Anthropic MCP Documentation</a></li>
+                            <li><a href="https://modelcontextprotocol.io/" target="_blank" class="text-blue-700 hover:underline">Model Context Protocol Official Site</a></li>
+                            <li><a href="https://www.anthropic.com/engineering/desktop-extensions" target="_blank" class="text-blue-700 hover:underline">Claude Desktop Extensions</a></li>
+                            <li><a href="https://www.youtube.com/watch?v=FCi4jT86gSw" target="_blank" class="text-blue-700 hover:underline">MCP Is Not Good Yet — David Cramer, Sentry</a></li>
+                            <li><a href="https://www.youtube.com/watch?v=7j1t3UZA1TY" target="_blank" class="text-blue-700 hover:underline">MCP vs API: Simplifying AI Agent Integration with External Data</a></li>
+                            <li><a href="https://www.youtube.com/watch?v=eeOANluSqAE" target="_blank" class="text-blue-700 hover:underline">Your API is not an MCP</a></li>
+                            <li><a href="https://www.youtube.com/watch?v=uhQQ3MjJAdI" target="_blank" class="text-blue-700 hover:underline">Your API ≠ MCP (avoid this mistake)</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-sm mb-2">MCPサーバー</h3>
+                        <ul class="list-disc pl-6 text-sm space-y-1">
+                            <li><a href="https://github.com/modelcontextprotocol/servers" target="_blank" class="text-blue-700 hover:underline">公式MCPサーバーリスト</a></li>
+                            <li><a href="https://github.com/punkpeye/awesome-mcp-servers" target="_blank" class="text-blue-700 hover:underline">Awesome MCP Servers</a></li>
+                            <li><a href="https://github.com/microsoft/playwright-mcp" target="_blank" class="text-blue-700 hover:underline">Playwright MCP</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ナビゲーション -->
+            <div class="mt-8">
+                <a href="../index.html" class="text-blue-700 hover:underline">← メイン目次に戻る</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
